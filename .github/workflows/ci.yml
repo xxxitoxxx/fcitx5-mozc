@@ -23,6 +23,30 @@ jobs:
           path: fcitx5-mozc
           submodules: recursive
 
+
+      - name: Expand swap space for Large Dictionary
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
+      - name: Merge and Inject Custom Dictionary
+        run: |
+          # 14個のファイルを合体（もし末尾に.txtを付けてたら dic_part*.txt に修正してください）
+          cat dic_part* > combined_dic.txt
+          
+          # Mozcの辞書配置場所を特定して上書き
+          # ※リポジトリの構造によりますが、一般的なパスを指定しています
+          DICTIONARY_PATH="submodules/mozc/src/data/dictionary_oss"
+          mkdir -p $DICTIONARY_PATH
+          
+          # 既存の辞書ファイルを削除して、自作辞書を dictionary00.txt として配置
+          rm -f $DICTIONARY_PATH/dictionary0*
+          mv combined_dic.txt $DICTIONARY_PATH/dictionary00.txt
+          
+          echo "Success: Custom dictionary (270MB) has been injected."
+
       - name: Patch
         working-directory: fcitx5-mozc
         run: |
